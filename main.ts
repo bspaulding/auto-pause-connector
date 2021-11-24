@@ -33,11 +33,14 @@ async function main() {
 async function checkLag() {
 				console.log('checking lag metric...');
 				const response = await fetch(`${prometheusHost}/api/v1/query?query=${query}`);
-				// console.log({ response });
 				if (response.ok) {
 								const responseJson = await response.json();
-								// console.log({ responseJson });
-								const lag = responseJson.data.result[0].value[1];
+								const value = responseJson.data?.result?.[0]?.value;
+								if (!value || value.length === 0) {
+												console.log(`prometheus returned no value for the metric, ignoring...\nresponse was: ${JSON.stringify(responseJson)}`);
+												return;
+								}
+								const lag = value[1];
 								console.log(`snowflakesink lag on ${topic} topic is ${lag}`);
 								if (lag >= pauseThresholdLag) {
 												await pauseConnector();
